@@ -27,47 +27,18 @@ app.use(cors());
 app.use(bodyparser.urlencoded({ extended: true }));
 app.use(bodyparser.json());
 
-// Add Section
-
-app.post("/api/hotdeals", async (req, res) => {
-  let hotdeal = {
-    name: req.body.name,
-    price: req.body.price,
-    images: req.body.images,
-    model: req.body.model,
-    description: req.body.description,
-    company: req.body.company,
-  };
-  const hotdealadd = new HotdealsModel(hotdeal);
-  hotdealadd.save((err, hotdeal) => {
-    if (err) {
-      res.json({ status: "error" });
-    } else {
-      res.json({ status: "success", data: hotdeal });
-    }
-  });
-});
-app.post("/api/recents", async (req, res) => {
-  let recent = {
-    name: req.body.name,
-    price: req.body.price,
-    images: req.body.images,
-    model: req.body.model,
-    description: req.body.description,
-    company: req.body.company,
-  };
-  const recentadd = new RecentModel(recent);
-  recentadd.save((err, recent) => {
-    if (err) {
-      res.json({ status: "error" });
-    } else {
-      res.json({ status: "success", data: recent });
-    }
-  });
-});
 
 // View Section
-
+app.get("/api/viewall", (req, res) => {
+  ProductModel.find((err, data) => {
+    
+    if (err) {
+      res.send("error find in view API");
+    } else {
+      res.json({data:data});
+    }
+  });
+});
 
 
 app.post("/api/viewProducts", async (req, res) => {
@@ -106,26 +77,7 @@ app.post("/api/deleteproduct", (req, res) => {
     }
   });
 });
-app.post("/api/deletehotdeals", (req, res) => {
-  var data = req.body;
-  HotdealsModel.deleteOne(data, (error, data) => {
-    if (error) {
-      res.json({ status: "error" });
-    } else {
-      res.json({ status: "success", data: data });
-    }
-  });
-});
-app.post("/api/deleterecent", (req, res) => {
-  var data = req.body;
-  RecentModel.deleteOne(data, (error, data) => {
-    if (error) {
-      res.json({ status: "error" });
-    } else {
-      res.json({ status: "success", data: data });
-    }
-  });
-});
+
 
 //VIEW PRODUCT PAGE
 app.post("/api/viewproductpage", (req, res) => {
