@@ -182,7 +182,15 @@ app.post("/api/addToCart", async (req, res) => {
           "products.productId": mongoose.Types.ObjectId(productId),
         },
         { $inc: { "products.$.quantity": 1 } },
-        (err, data) => {}
+        (err, data) => {
+
+          // if (err) {
+          //  console.log("error");
+          // } else {
+          //   res.send(alert("Added successfully"))
+          // }
+        }
+        
       );
     } else {
       //if the product is not exist in the cart
