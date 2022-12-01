@@ -183,12 +183,6 @@ app.post("/api/addToCart", async (req, res) => {
         },
         { $inc: { "products.$.quantity": 1 } },
         (err, data) => {
-
-          // if (err) {
-          //  console.log("error");
-          // } else {
-          //   res.send(alert("Added successfully"))
-          // }
         }
         
       );
@@ -329,6 +323,7 @@ app.post("/api/totalAmount", async (req, res) => {
   }
 });
 
+//CHECKOUT
 app.post("/api/checkout", async (req, res) => {
   let user = req.body.userId;
   let total = req.body.totalAmount;
