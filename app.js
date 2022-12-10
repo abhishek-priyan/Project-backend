@@ -13,8 +13,8 @@ const product = require("./model/product");
 const jwt = require("jsonwebtoken");
 const app = express();
 const Cart = require("./model/cart");
-const {generaterazorpay} = require('./razorpay') 
-const {signatureVerification} = require('./razorpay') 
+const { generaterazorpay } = require("./razorpay");
+const { signatureVerification } = require("./razorpay");
 
 const url =
   "mongodb+srv://databose:databose@cluster0.w6zhawy.mongodb.net/databoseDb?retryWrites=true&w=majority";
@@ -27,28 +27,45 @@ app.use(cors());
 app.use(bodyparser.urlencoded({ extended: true }));
 app.use(bodyparser.json());
 
+//VERIFICATION MIDDLEWARE
+function verifyToken(req, res, next) {
+  if (!req.headers.authorization) {
+    return res.status(401).send("Unauthorized request");
+  }
+  let token = req.headers.authorization.split("")[1];
+  if (token == "null") {
+    return res.status(401).send("Unauthorized request");
+  }
+  let payload = jwt.verify(token, "secretKey");
+  console.log(payload);
+  if (!payload) {
+    return res.status(401).send("Unauthorized request");
+  }
+  req.userId = payload.subject;
+  console.log(userId);  
+  next();
+}
 
 // View Section
 app.get("/api/viewall", (req, res) => {
   ProductModel.find((err, data) => {
-    
     if (err) {
       res.send("error find in view API");
     } else {
-      res.json({data:data});
+      res.json({ data: data });
     }
   });
 });
 
-
 app.post("/api/viewProducts", async (req, res) => {
-  let tag=req.body.tag
-  console.log(tag);
+  let tag = req.body.tag;
   ProductModel.find({ tag: tag }, (err, data) => {
     if (err) {
       res.json({ success: "false" });
+      console.log(err);
     } else {
       res.json({ success: "true", data: data });
+      console.log(tag);
     }
   });
 });
@@ -65,8 +82,8 @@ app.post("/api/oneHotDealsProdcuts", (req, res) => {
   });
 });
 
-// Delete section
 
+// DELETE SECTION
 app.post("/api/deleteproduct", (req, res) => {
   var data = req.body;
   ProductModel.deleteOne(data, (error, data) => {
@@ -77,7 +94,6 @@ app.post("/api/deleteproduct", (req, res) => {
     }
   });
 });
-
 
 //VIEW PRODUCT PAGE
 app.post("/api/viewproductpage", (req, res) => {
@@ -160,7 +176,7 @@ app.post("/api/login", async (req, res) => {
 });
 
 //ADD CART
-app.post("/api/addToCart", async (req, res) => {
+app.post("/api/addToCart", verifyToken, async (req, res) => {
   console.log(req.body);
   let userId = req.body.userId;
   let productId = req.body.productId;
@@ -175,20 +191,18 @@ app.post("/api/addToCart", async (req, res) => {
     console.log(proExist);
     //if the product is exist in the cart
     if (proExist != -1) {
-      console.log('exi');
+      console.log("exi");
       Cart.findOneAndUpdate(
         {
           userId: userId,
           "products.productId": mongoose.Types.ObjectId(productId),
         },
         { $inc: { "products.$.quantity": 1 } },
-        (err, data) => {
-        }
-        
+        (err, data) => {}
       );
     } else {
       //if the product is not exist in the cart
-      console.log('no exi');
+      console.log("no exi");
       let cart = await Cart.findOne({ userId: userId });
       let updated = await cart.update({
         $push: {
