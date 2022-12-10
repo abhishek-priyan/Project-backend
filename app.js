@@ -6,7 +6,7 @@ const bcrypt = require("bcrypt");
 const { urlencoded } = require("body-parser");
 const UserModel = require("./model/user");
 const ProductModel = require("./model/product");
-const orderModel = require("./model/order");
+const Order = require("./model/order");
 // const HotdealsModel = require("./model/hotdeals");
 const RecentModel = require("./model/recent");
 const product = require("./model/product");
@@ -49,6 +49,15 @@ function verifyToken(req, res, next) {
 // View Section
 app.get("/api/viewall", (req, res) => {
   ProductModel.find((err, data) => {
+    if (err) {
+      res.send("error find in view API");
+    } else {
+      res.json({ data: data });
+    }
+  });
+});
+app.get("/api/vieworder", (req, res) => {
+  Order.find((err, data) => {
     if (err) {
       res.send("error find in view API");
     } else {
@@ -176,7 +185,7 @@ app.post("/api/login", async (req, res) => {
 });
 
 //ADD CART
-app.post("/api/addToCart", verifyToken, async (req, res) => {
+app.post("/api/addToCart", async (req, res) => {
   console.log(req.body);
   let userId = req.body.userId;
   let productId = req.body.productId;
@@ -260,6 +269,45 @@ app.post("/api/sendCart", async (req, res) => {
       },
     ]);
     res.json({ success: true, data: data });
+  }
+});
+
+//QUANTITY ADJUST IN CART
+app.post("/api/cartAdjust", async (req, res) => {
+  let user = req.body.user;
+  let value = req.body.value;
+  let productId = req.body.product;
+  console.log(user, value, productId);
+
+  if (value === "inc") {
+    console.log("inc");
+    Cart.findOneAndUpdate(
+      {
+        userId: user,
+        "products.productId": mongoose.Types.ObjectId(productId),
+      },
+      {
+        $inc: { "products.$.quantity": 1 },
+      },
+      (err, data) => {
+        res.json({ sucess: true });
+      }
+    );
+  } else {
+    console.log("dec");
+
+    Cart.findOneAndUpdate(
+      {
+        userId: user,
+        "products.productId": mongoose.Types.ObjectId(productId),
+      },
+      {
+        $inc: { "products.$.quantity": -1 },
+      },
+      (err, data) => {
+        res.json({ sucess: true });
+      }
+    );
   }
 });
 
@@ -364,7 +412,7 @@ app.post("/api/checkout", async (req, res) => {
     total: total,
     orderedAt: new Date(),
   };
-  let order = new orderModel(newOrder);
+  let order = new Order(newOrder);
   order.save((err, data) => {
     if (err) {
       res.json({ success: false, msg: "failed to place a order" });
@@ -397,7 +445,7 @@ app.post("/api/verifyPayment", (req, res) => {
     .then((response) => {
       //ifSuccessFull
       //orderPlaced
-      orderModel.updateOne(
+      Order.updateOne(
         { _id: id },
         { $set: { status: "placed" } },
         (err, data) => {
